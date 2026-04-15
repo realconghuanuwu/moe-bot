@@ -1,0 +1,33 @@
+name: Publish Docker Image
+
+# Trigger: Chạy khi có hành động push vào nhánh main
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build-and-push:
+    name: Build and Push to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+      # Bước 1: Lấy code từ GitHub về máy ảo
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Bước 2: Đăng nhập vào Docker Hub bằng Secrets
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Bước 3: Build Image và Push lên Docker Hub
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          # Ví dụ: huen/discord-bot:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/moe-discord-bot:latest
