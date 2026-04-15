@@ -1,6 +1,5 @@
 import { Command } from '@sapphire/framework';
 import { addMessageToHistory, getHistory } from '../lib/history.js';
-import { EmbedBuilder } from 'discord.js';
 import { SYSTEM_PROMP } from '../utils/system-promp.js';
 
 export class ChatCommand extends Command {
@@ -30,7 +29,6 @@ export class ChatCommand extends Command {
     await interaction.deferReply();
 
     const channelId = interaction.channelId;
-    const history = getHistory(channelId);
 
     try {
       // Add user message to history
@@ -49,14 +47,8 @@ export class ChatCommand extends Command {
       // Add AI response to history
       addMessageToHistory(channelId, 'assistant', replyContent);
 
-      const embed = new EmbedBuilder()
-        .setColor('#5865F2')
-        .setTitle(replyContent)
-        .setAuthor({ name: interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
-        .setFooter({ text: `${prompt}` })
-        .setTimestamp()
-
-      return interaction.editReply({ embeds: [embed] });
+      const plainReply = `Bạn hỏi: ${prompt}\nCâu trả lời:\n${replyContent}`;
+      return interaction.editReply(plainReply);
     } catch (error) {
       console.error(error);
       return interaction.editReply('Đã có lỗi xảy ra, vui lòng thử lại sau hoặc hỏi tôi câu khác nhé!');
