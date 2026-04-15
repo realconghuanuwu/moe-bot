@@ -1,0 +1,25 @@
+services:
+  bot:
+    # Thay 'huen' bằng Docker Hub Username của bạn
+    image: realconghuan/moe-discord-bot:latest
+    container_name: moe-discord-bot-prod
+
+    # Tự động chạy lại bot nếu server khởi động lại hoặc bot bị crash
+    restart: always
+
+    # Đọc các thông số nhạy cảm (Token, API Key) từ file .env local
+    env_file:
+      - .env
+
+    # Cấu hình log để tránh làm đầy ổ cứng server
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m" # Mỗi file log tối đa 10MB
+        max-file: "3" # Giữ tối đa 3 file log cũ nhất
+
+
+    # Nếu bot của bạn có dùng database local (như SQLite hoặc lưu file json)
+    # Hãy bỏ comment phần volumes bên dưới để không bị mất dữ liệu khi xóa container
+    # volumes:
+    #   - ./database:/app/database
