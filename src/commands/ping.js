@@ -31,7 +31,7 @@ export class PingCommand extends Command {
     if (msg && isMessageInstance(msg)) {
       const diff = msg.createdTimestamp - interaction.createdTimestamp;
       const ping = Math.round(this.container.client.ws.ping);
-      return interaction.editReply(`Pong 🏓! (Round trip took: ${diff}ms. Heartbeat: ${ping}ms. test ci/cd)`);
+      return interaction.editReply(`Pong 🏓! (Round trip took: ${diff}ms. Heartbeat: ${ping}ms.)`);
     }
 
     return interaction.editReply('Failed to retrieve ping :(');
