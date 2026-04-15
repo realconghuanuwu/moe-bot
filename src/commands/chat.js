@@ -59,7 +59,7 @@ export class ChatCommand extends Command {
       return interaction.editReply({ embeds: [embed] });
     } catch (error) {
       console.error(error);
-      return interaction.editReply('Sorry, I encountered an error while talking to ChatGPT. Maybe check if the API key is correct?');
+      return interaction.editReply('Đã có lỗi xảy ra, vui lòng thử lại sau hoặc hỏi tôi câu khác nhé!');
     }
   }
 }
