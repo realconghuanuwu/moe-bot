@@ -1,7 +1,7 @@
 services:
   bot:
     build: .
-    container_name: discord-bot
+    container_name: moe-discord-bot
     ports:
       - "3067:3000"
     restart: always
