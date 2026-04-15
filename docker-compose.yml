@@ -1,0 +1,14 @@
+services:
+  bot:
+    build: .
+    container_name: discord-bot
+    ports:
+      - "3067:3000"
+    restart: always
+    env_file:
+      - .env
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

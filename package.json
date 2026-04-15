@@ -1,0 +1,17 @@
+{
+  "name": "my-demo-sapphire",
+  "main": "src/index.js",
+  "dependencies": {
+    "@sapphire/discord.js-utilities": "^7.3.3",
+    "@sapphire/framework": "^5.5.0",
+    "axios": "^1.15.0",
+    "cheerio": "^1.2.0",
+    "discord.js": "14.x",
+    "dotenv": "^17.4.2",
+    "openai": "^6.34.0"
+  },
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "type": "module"
+}
