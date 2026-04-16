@@ -1,4 +1,5 @@
 import { Command } from '@sapphire/framework';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder } from 'discord.js';
 import { getGoogleSheet } from '../lib/googleSheet.js';
 
 export class CheckYtPreCommand extends Command {
@@ -81,12 +82,62 @@ export class CheckYtPreCommand extends Command {
 
             // 3. Check all-year status
             if (unpaidMonths.length === 0) {
-                responseMessage += `🎉 Tuyệt vời! Bạn đã thanh toán cho **cả năm ${currentYear}**.`;
+                responseMessage += `🎉 Tuyệt vời! Bạn đã thanh toán cho **cả năm ${currentYear}**.\n`;
             } else {
                 responseMessage += `📌 Các tháng chưa thanh toán:\n> ${unpaidMonths.join(', ')}`;
             }
 
-            await interaction.editReply(responseMessage);
+            // Add Payment Button
+            const row = new ActionRowBuilder().addComponents(
+                new ButtonBuilder()
+                    .setCustomId('pay_yt')
+                    .setLabel('Hướng dẫn thanh toán')
+                    .setStyle(ButtonStyle.Primary)
+                    .setEmoji('💰')
+            );
+
+            const msg = await interaction.editReply({ 
+                content: responseMessage, 
+                components: [row] 
+            });
+
+            // Create collector for the button
+            const collector = msg.createMessageComponentCollector({
+                componentType: ComponentType.Button,
+                time: 600000 // 10 minutes
+            });
+
+            collector.on('collect', async (i) => {
+                if (i.customId === 'pay_yt') {
+                    const payInfo = `💰 **Số tiền:** 27.000đ\n\n` +
+                        `🏦 **Thông tin chuyển khoản:**\n` +
+                        `**MB Bank:** 1010100007214 (LUONG CONG HUAN)\n` +
+                        `**MoMo:** 0915364692 (LUONG CONG HUAN)\n\n` +
+                        `📊 **Xem bảng theo dõi thanh toán tại:** https://url-shortener.me/BU49\n\n`;
+
+                    const mbEmbed = new EmbedBuilder()
+                        .setTitle('QR Code MB Bank')
+                        .setColor('#004a95')
+                        .setImage('https://lh3.googleusercontent.com/d/1pmdIEpVSNUyab4m2Lb3sPjSZnjdIXQEU');
+
+                    const momoEmbed = new EmbedBuilder()
+                        .setTitle('QR Code MoMo')
+                        .setColor('#a50064')
+                        .setImage('https://lh3.googleusercontent.com/d/14Pn5QMJbz_n9NIVlx97YYR_bO1zmEMGq');
+
+                    await i.reply({
+                        content: payInfo,
+                        embeds: [mbEmbed, momoEmbed],
+                        ephemeral: false
+                    });
+                }
+            });
+
+            collector.on('end', () => {
+                // Optionally disable the button after timeout
+                row.components[0].setDisabled(true);
+                interaction.editReply({ components: [row] }).catch(() => {});
+            });
 
         } catch (error) {
             console.error('Error in check-yt-pre command:', error);
