@@ -8,6 +8,8 @@
     "cheerio": "^1.2.0",
     "discord.js": "14.x",
     "dotenv": "^17.4.2",
+    "google-auth-library": "^10.6.2",
+    "google-spreadsheet": "^5.2.0",
     "openai": "^6.34.0"
   },
   "scripts": {
