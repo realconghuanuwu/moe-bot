@@ -8,6 +8,12 @@ const client = new SapphireClient({
   loadMessageCommandListeners: true
 });
 
+declare module '@sapphire/framework' {
+  interface Container {
+    openai: OpenAI;
+  }
+}
+
 container.openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
   baseURL: process.env.OPENAI_BASE_URL

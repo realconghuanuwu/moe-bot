@@ -4,7 +4,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Singleton instance to prevent reloading on every command
-let doc = null;
+let doc: GoogleSpreadsheet | null = null;
 
 export async function getGoogleSheet() {
     if (doc) return doc;

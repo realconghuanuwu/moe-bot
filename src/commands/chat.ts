@@ -38,11 +38,11 @@ export class ChatCommand extends Command {
         model: 'openai/gpt-oss-120b',
         messages: [
           { role: 'system', content: SYSTEM_PROMP },
-          ...getHistory(channelId)
+          ...(getHistory(channelId) as any)
         ]
       });
 
-      const replyContent = response.choices[0].message.content;
+      const replyContent = response.choices[0].message.content || '';
 
       // Add AI response to history
       addMessageToHistory(channelId, 'assistant', replyContent);
