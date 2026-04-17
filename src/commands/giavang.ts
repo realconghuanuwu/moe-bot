@@ -1,6 +1,6 @@
 import { Command } from "@sapphire/framework";
 import { EmbedBuilder } from "discord.js";
-import { fetchGoldPrice } from "../lib/scraper.js";
+import { fetchGoldPrice } from "../utils/scraper.js";
 import { IMAGE } from "../constants/image.constant.js";
 
 export class GiaVangCommand extends Command {

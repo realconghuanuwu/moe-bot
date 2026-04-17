@@ -1,6 +1,6 @@
 import { Command } from "@sapphire/framework";
 import { EmbedBuilder } from "discord.js";
-import { fetchFuelPrice } from "../lib/scraper.js";
+import { fetchFuelPrice } from "../utils/scraper.js";
 
 export class GiaXangCommand extends Command {
   constructor(context, options) {

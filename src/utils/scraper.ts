@@ -1,5 +1,8 @@
 import axios from "axios";
 import * as cheerio from "cheerio";
+import dayjs from "dayjs";
+import { DATE_FORMAT } from "../constants/date.constant.js";
+import { USER_AGENT } from "../constants/user-agent.constant.js";
 
 const GOLD_URL = "https://simplize.vn/gia-vang";
 const FUEL_URL = "https://www.pvoil.com.vn/tin-gia-xang-dau";
@@ -12,8 +15,7 @@ export async function fetchGoldPrice() {
   try {
     const { data } = await axios.get(GOLD_URL, {
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "User-Agent": USER_AGENT.WEB,
       },
     });
     const $ = cheerio.load(data);
@@ -25,9 +27,8 @@ export async function fetchGoldPrice() {
       sellDiff?: string;
     }[] = [];
 
-    // Simpize doesn't have a clear "Updated At" text in the HTML, so we use current time
-    const now = new Date();
-    const updatedAt = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()} ${now.getDate()}/${now.getMonth() + 1}/${now.getFullYear()}`;
+    const now = dayjs();
+    const updatedAt = now.format(DATE_FORMAT.TIME_DATE_ONE);
 
     // Targeting the table rows
     $("tr.simplize-table-row").each((i, el) => {

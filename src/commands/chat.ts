@@ -1,5 +1,5 @@
 import { Command } from "@sapphire/framework";
-import { addMessageToHistory, getHistory } from "../lib/history.js";
+import { addMessageToHistory, getHistory } from "../utils/history.js";
 import { SYSTEM_PROMP } from "../utils/system-promp.js";
 import { OPENAI_MODEL } from "../constants/openai-model.constant.js";
 
