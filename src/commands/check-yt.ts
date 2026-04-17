@@ -1,6 +1,7 @@
 import { Command } from '@sapphire/framework';
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType, EmbedBuilder } from 'discord.js';
 import { getGoogleSheet } from '../lib/googleSheet.js';
+import { IMAGE } from '../constants/image.constant.js';
 
 export class CheckYtPreCommand extends Command {
     constructor(context, options) {
@@ -118,12 +119,12 @@ export class CheckYtPreCommand extends Command {
                     const mbEmbed = new EmbedBuilder()
                         .setTitle('QR Code MB Bank')
                         .setColor('#004a95')
-                        .setImage('https://lh3.googleusercontent.com/d/1pmdIEpVSNUyab4m2Lb3sPjSZnjdIXQEU');
+                        .setImage(IMAGE.MB_BANK_QR);
 
                     const momoEmbed = new EmbedBuilder()
                         .setTitle('QR Code MoMo')
                         .setColor('#a50064')
-                        .setImage('https://lh3.googleusercontent.com/d/14Pn5QMJbz_n9NIVlx97YYR_bO1zmEMGq');
+                        .setImage(IMAGE.MOMO_QR);
 
                     await i.reply({
                         content: payInfo,
