@@ -16,7 +16,7 @@ export async function fetchGoldPrice() {
             }
         });
         const $ = cheerio.load(data);
-        const prices = [];
+        const prices: { name: string, buy: string, sell: string }[] = [];
         
         // Simpize doesn't have a clear "Updated At" text in the HTML, so we use current time
         const now = new Date();
@@ -75,7 +75,7 @@ export async function fetchFuelPrice() {
             }
         });
         const $ = cheerio.load(data);
-        const prices = [];
+        const prices: { name: string, price: string }[] = [];
 
         const updatedAt = $('.oilpricescontainer table thead tr:first-child td[colspan="1"]').text().trim() || 'Không rõ';
 

@@ -28,7 +28,7 @@ export class CheckYtPreCommand extends Command {
             const doc = await getGoogleSheet();
             
             // "2112995111" is likely the sheet 'gid' (Worksheet ID).
-            const sheet = doc.sheetsById['2112995111'];
+            const sheet = doc!.sheetsById['2112995111'];
             
             if (!sheet) {
                 return interaction.editReply('❌ Không tìm thấy Sheet với ID 2112995111 trong Document.');
@@ -56,7 +56,7 @@ export class CheckYtPreCommand extends Command {
             const dueDate = userRow.get('Hạn Thanh toán');
 
             // 2. Check all months in the year
-            const unpaidMonths = [];
+            const unpaidMonths: string[] = [];
             for (let i = 1; i <= 12; i++) {
                 const monthCol = `Tháng ${i}`;
                 if (userRow.get(monthCol) !== 'TRUE') {
@@ -135,7 +135,7 @@ export class CheckYtPreCommand extends Command {
 
             collector.on('end', () => {
                 // Optionally disable the button after timeout
-                row.components[0].setDisabled(true);
+                (row.components[0] as ButtonBuilder).setDisabled(true);
                 interaction.editReply({ components: [row] }).catch(() => {});
             });
 
