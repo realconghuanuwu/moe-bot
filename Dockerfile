@@ -1,5 +1,8 @@
 # Build stage
 FROM node:20-slim AS base
+# Cài đặt FFmpeg hệ thống (cần thiết cho @discordjs/voice)
+RUN apt-get update && apt-get install -y ffmpeg
+
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
