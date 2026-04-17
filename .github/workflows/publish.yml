@@ -16,14 +16,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Bước 2: Đăng nhập vào Docker Hub bằng Secrets
+      # Bước 2: Setup pnpm
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      # Bước 3: Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "pnpm"
+
+      # Bước 4: Cài đặt dependencies
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Bước 5: Kiểm tra lỗi TypeScript (Type Check)
+      - name: Type check
+        run: pnpm tsc --noEmit
+
+      # Bước 6: Đăng nhập vào Docker Hub bằng Secrets
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # Bước 3: Build Image và Push lên Docker Hub
+      # Bước 7: Build Image và Push lên Docker Hub
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:

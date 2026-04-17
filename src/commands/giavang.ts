@@ -36,9 +36,11 @@ export class GiaVangCommand extends Command {
         .setURL("https://simplize.vn/gia-vang")
         .setDescription(`🕒 Cập nhật lúc: **${updatedAt}**`)
         .setColor("#FFD700")
-        .setThumbnail("https://cdn-icons-png.flaticon.com/512/2653/2653512.png")
+        .setThumbnail(
+          "https://lh3.googleusercontent.com/d/1XRwx0Gcra9uvC51m_9jSC8vg8oPnFQ2l",
+        )
         .setTimestamp()
-        .setFooter({ text: "Nguồn: simplize.vn • Đơn vị: VNĐ" });
+        .setFooter({ text: "Nguồn: simplize.vn • Đơn vị: VNĐ/Lượng" });
 
       // Lấy tối đa 8 loại vàng quan trọng nhất để hiển thị trực quan và đẹp mắt
       prices.slice(0, 8).forEach((item) => {
