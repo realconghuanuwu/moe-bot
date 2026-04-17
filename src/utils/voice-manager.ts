@@ -12,9 +12,21 @@ import { Collection } from "discord.js";
 import * as googleTTS from "google-tts-api";
 import { spawn } from "child_process";
 import { createRequire } from "module";
+import fs from "fs";
 
 const require = createRequire(import.meta.url);
-const ffmpeg = require("ffmpeg-static");
+const ffmpegStaticPath = require("ffmpeg-static");
+
+// Tự động phát hiện và fallback nếu ffmpeg-static bị lỗi trên Linux/Ubuntu
+let ffmpegPath = ffmpegStaticPath;
+if (!ffmpegPath || !fs.existsSync(ffmpegPath)) {
+  console.log(
+    `[VoiceMgr] FFmpeg-static không tồn tại tại: ${ffmpegPath}. Thử dùng 'ffmpeg' hệ thống...`,
+  );
+  ffmpegPath = "ffmpeg";
+} else {
+  console.log(`[VoiceMgr] Đang sử dụng FFmpeg tại: ${ffmpegPath}`);
+}
 
 export interface QueueItem {
   content: string;
@@ -134,7 +146,7 @@ class GuildVoiceManager {
 
     ffmpegArgs.push("-c:a", "libopus", "-ar", "48000", "-ac", "2", "-f", "ogg", "pipe:1");
 
-    const ffmpegProcess = spawn(ffmpeg, ffmpegArgs, {
+    const ffmpegProcess = spawn(ffmpegPath, ffmpegArgs, {
       stdio: ["ignore", "pipe", "pipe"],
     });
 
