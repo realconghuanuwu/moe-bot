@@ -4,7 +4,12 @@ import { GatewayIntentBits } from 'discord.js';
 import OpenAI from 'openai';
 
 const client = new SapphireClient({
-  intents: [GatewayIntentBits.MessageContent, GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages],
+  intents: [
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildVoiceStates
+  ],
   loadMessageCommandListeners: true
 });
 
