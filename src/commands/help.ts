@@ -33,7 +33,7 @@ export class HelpCommand extends Command {
         {
           name: "📊 Tra Cứu Thông Tin",
           value:
-            "**/giavang**: Cập nhật giá vàng trong nước (SJC, Doji...) và quốc tế.\n**/giaxang**: Cập nhật giá xăng dầu (Petrolimex, PVOIL) mới nhất.\n**/chat** [content]: Trò chuyện trực tiếp với trí tuệ nhân tạo AI.",
+            "**/giavang**: Cập nhật giá vàng trong nước (SJC, Doji...) và quốc tế.\n**/giaxang**: Cập nhật giá xăng dầu (Petrolimex) mới nhất.\n**/chat** [content]: Trò chuyện trực tiếp với trí tuệ nhân tạo AI.",
         },
         {
           name: "⚙️ Tiện Ích Hệ Thống",
