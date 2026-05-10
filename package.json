@@ -1,5 +1,6 @@
 {
   "name": "my-demo-sapphire",
+  "packageManager": "pnpm@9.15.4",
   "main": "dist/index.js",
   "dependencies": {
     "@discordjs/voice": "^0.19.2",
