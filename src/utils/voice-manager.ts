@@ -77,7 +77,13 @@ class GuildVoiceManager {
     }
 
     if (this.player.state.status === AudioPlayerStatus.Idle && this.currentChunks.length === 0) {
-      this.processQueue();
+      if (this.connection?.state.status === VoiceConnectionStatus.Ready) {
+        this.processQueue();
+      } else {
+        console.log(
+          `[VoiceMgr:${this.guildId}] Waiting for voice connection to be ready before playback`,
+        );
+      }
     }
   }
 
@@ -95,6 +101,13 @@ class GuildVoiceManager {
 
     this.connection.on(VoiceConnectionStatus.Ready, () => {
       console.log(`[VoiceMgr:${this.guildId}] Connection Ready`);
+      if (
+        this.player.state.status === AudioPlayerStatus.Idle &&
+        this.currentChunks.length === 0 &&
+        this.queue.length > 0
+      ) {
+        this.processQueue();
+      }
     });
 
     this.connection.on("error", (err) => {
