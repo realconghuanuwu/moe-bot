@@ -189,6 +189,36 @@ class GuildVoiceManager {
       this.connection = null;
     }
   }
+
+  /**
+   * Skip bài TTS hiện tại (bỏ hết chunk còn lại) và chuyển sang item kế trong queue.
+   * @returns true nếu có gì để skip (đang phát / còn chunk / còn hàng đợi)
+   */
+  public skip(): boolean {
+    const hasQueued = this.queue.length > 0;
+    const hasCurrent =
+      this.currentChunks.length > 0 ||
+      this.player.state.status === AudioPlayerStatus.Playing ||
+      this.player.state.status === AudioPlayerStatus.Buffering;
+
+    if (!hasCurrent && !hasQueued) {
+      return false;
+    }
+
+    this.currentChunks = [];
+    this.currentChunkIndex = 0;
+
+    if (
+      this.player.state.status === AudioPlayerStatus.Playing ||
+      this.player.state.status === AudioPlayerStatus.Buffering
+    ) {
+      this.player.stop();
+      return true;
+    }
+
+    this.processQueue();
+    return true;
+  }
 }
 
 class GlobalVoiceManager {

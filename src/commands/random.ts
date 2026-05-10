@@ -64,6 +64,11 @@ export class RandomCommand extends Command {
         )
         .addSubcommand((subcommand) =>
           subcommand.setName("stop").setDescription("Dừng phát và rời phòng Voice"),
+        )
+        .addSubcommand((subcommand) =>
+          subcommand
+            .setName("skip")
+            .setDescription("Bỏ qua bài đang phát, phát bài văn mẫu kế trong hàng đợi Voice"),
         ),
     );
   }
@@ -73,6 +78,10 @@ export class RandomCommand extends Command {
 
     if (subcommand === "stop") {
       return this.handleStop(interaction);
+    }
+
+    if (subcommand === "skip") {
+      return this.handleSkip(interaction);
     }
 
     const tts = interaction.options.getBoolean("tts") ?? false;
@@ -169,6 +178,26 @@ export class RandomCommand extends Command {
 
     return interaction.reply({
       content: "🛑 Đã dừng phát và xóa hàng đợi âm thanh. Tạm biệt!",
+    });
+  }
+
+  private async handleSkip(interaction: Command.ChatInputCommandInteraction) {
+    const guildId = interaction.guildId;
+    if (!guildId) {
+      return interaction.reply({
+        content: "❌ Lệnh chỉ dùng trong server.",
+        ephemeral: true,
+      });
+    }
+
+    const guildManager = voiceManager.getOrCreateManager(guildId);
+    const skipped = guildManager.skip();
+
+    return interaction.reply({
+      content: skipped
+        ? "⏭️ Đã bỏ qua bài hiện tại. Đang phát bài kế trong hàng đợi (nếu còn)."
+        : "❌ Không có bài nào đang phát hoặc trong hàng đợi để bỏ qua.",
+      ephemeral: true,
     });
   }
 }
