@@ -1,7 +1,12 @@
 # Build stage
 FROM node:20-slim AS base
-# Cài đặt FFmpeg hệ thống (cần thiết cho @discordjs/voice)
-RUN apt-get update && apt-get install -y ffmpeg
+# Cài đặt toolchain để build native module (node-gyp) + FFmpeg runtime
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ffmpeg \
+    python3 \
+    python-is-python3 \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
