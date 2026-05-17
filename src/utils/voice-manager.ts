@@ -10,23 +10,53 @@ import {
 } from "@discordjs/voice";
 import { Collection } from "discord.js";
 import * as googleTTS from "google-tts-api";
-import { spawn } from "child_process";
+import { spawn, spawnSync } from "child_process";
 import { createRequire } from "module";
 import fs from "fs";
 
 const require = createRequire(import.meta.url);
 const ffmpegStaticPath = require("ffmpeg-static");
 
-// Tự động phát hiện và fallback nếu ffmpeg-static bị lỗi trên Linux/Ubuntu
-let ffmpegPath = ffmpegStaticPath;
-if (!ffmpegPath || !fs.existsSync(ffmpegPath)) {
-  console.log(
-    `[VoiceMgr] FFmpeg-static không tồn tại tại: ${ffmpegPath}. Thử dùng 'ffmpeg' hệ thống...`,
-  );
-  ffmpegPath = "ffmpeg";
-} else {
-  console.log(`[VoiceMgr] Đang sử dụng FFmpeg tại: ${ffmpegPath}`);
+function canRunFfmpeg(candidate: string): boolean {
+  const isPath = candidate.includes("/") || candidate.includes("\\");
+  if (isPath && !fs.existsSync(candidate)) return false;
+
+  const result = spawnSync(candidate, ["-version"], {
+    encoding: "utf-8",
+    timeout: 3000,
+  });
+
+  if (result.error || result.status !== 0) {
+    console.warn(
+      `[VoiceMgr] FFmpeg candidate failed: ${candidate}`,
+      result.error ?? result.stderr,
+    );
+    return false;
+  }
+
+  return true;
 }
+
+function resolveFfmpegPath(): string {
+  const candidates = [
+    process.env.FFMPEG_PATH,
+    process.platform === "linux" ? "ffmpeg" : undefined,
+    ffmpegStaticPath,
+    "ffmpeg",
+  ].filter((value): value is string => Boolean(value));
+
+  for (const candidate of candidates) {
+    if (canRunFfmpeg(candidate)) {
+      console.log(`[VoiceMgr] Using FFmpeg: ${candidate}`);
+      return candidate;
+    }
+  }
+
+  console.warn("[VoiceMgr] No verified FFmpeg found, falling back to 'ffmpeg'");
+  return "ffmpeg";
+}
+
+const ffmpegPath = resolveFfmpegPath();
 
 export interface QueueItem {
   content: string;
@@ -145,7 +175,7 @@ class GuildVoiceManager {
     const chunkUrl = this.currentChunks[this.currentChunkIndex].url;
     console.log(`[VoiceMgr:${this.guildId}] Playing chunk ${this.currentChunkIndex + 1}/${this.currentChunks.length} (Speed: ${this.currentSpeed}x)`);
 
-    const ffmpegArgs = ["-i", chunkUrl];
+    const ffmpegArgs = ["-hide_banner", "-nostdin", "-i", chunkUrl];
 
     if (this.currentSpeed !== 1) {
       let filter = "";
@@ -162,6 +192,7 @@ class GuildVoiceManager {
     const ffmpegProcess = spawn(ffmpegPath, ffmpegArgs, {
       stdio: ["ignore", "pipe", "pipe"],
     });
+    let ffmpegStderr = "";
 
     ffmpegProcess.on("error", (err) => {
       console.error(`[VoiceMgr:${this.guildId}] FFmpeg spawn error:`, err);
@@ -169,8 +200,18 @@ class GuildVoiceManager {
 
     ffmpegProcess.stderr.on("data", (data) => {
       const msg = data.toString();
-      if (msg.includes("Error") || msg.includes("failed")) {
+      ffmpegStderr += msg;
+      const lower = msg.toLowerCase();
+      if (lower.includes("error") || lower.includes("failed")) {
         console.error(`[VoiceMgr:${this.guildId}] FFmpeg stderr: ${msg}`);
+      }
+    });
+
+    ffmpegProcess.on("close", (code, signal) => {
+      if (code !== 0) {
+        console.error(
+          `[VoiceMgr:${this.guildId}] FFmpeg exited with code=${code} signal=${signal}. stderr=${ffmpegStderr.slice(-2000)}`,
+        );
       }
     });
 

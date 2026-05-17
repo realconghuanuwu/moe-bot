@@ -2,26 +2,7 @@ import { Command } from "@sapphire/framework";
 import { EmbedBuilder, GuildMember } from "discord.js";
 import axios from "axios";
 import { readFile } from "fs/promises";
-import {
-  joinVoiceChannel,
-  createAudioPlayer,
-  createAudioResource,
-  AudioPlayerStatus,
-  VoiceConnectionStatus,
-  StreamType,
-} from "@discordjs/voice";
-import * as googleTTS from "google-tts-api";
-import { createRequire } from "module";
-import { spawn } from "child_process";
 import { voiceManager } from "../utils/voice-manager.js";
-
-const require = createRequire(import.meta.url);
-const ffmpeg = require("ffmpeg-static");
-
-// Thiết lập đường dẫn FFmpeg cho các thư viện audio
-if (ffmpeg) {
-  process.env.FFMPEG_PATH = ffmpeg;
-}
 
 export class RandomCommand extends Command {
   public constructor(context: Command.LoaderContext, options: Command.Options) {

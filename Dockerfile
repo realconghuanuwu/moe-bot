@@ -2,6 +2,7 @@
 FROM node:20-slim AS base
 # Cài đặt toolchain để build native module (node-gyp) + FFmpeg runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
     ffmpeg \
     python3 \
     python-is-python3 \
