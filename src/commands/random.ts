@@ -133,6 +133,17 @@ export class RandomCommand extends Command {
             return;
           }
 
+          const loadingMessage = await interaction.followUp({
+            content: "⏳ Đã thêm vào hàng đợi TTS. Bot sẽ tạo giọng khi đến lượt...",
+            ephemeral: true,
+          });
+          const editTtsStatus = async (content: string) => {
+            try {
+              await loadingMessage.edit(content);
+            } catch (error) {
+              console.warn("Failed to edit TTS loading message:", error);
+            }
+          };
           const guildManager = voiceManager.getOrCreateManager(interaction.guildId!);
           
           await guildManager.addToQueue({
@@ -141,11 +152,16 @@ export class RandomCommand extends Command {
             guildId: interaction.guildId!,
             channelId: member.voice.channel.id,
             adapterCreator: interaction.guild!.voiceAdapterCreator,
-          });
-
-          await interaction.followUp({
-            content: "✅ Đã thêm vào hàng đợi phát âm thanh!",
-            ephemeral: true,
+            onTtsProcessing: () =>
+              editTtsStatus("⏳ Đang tạo giọng đọc bằng VietNeu TTS, vui lòng chờ..."),
+            onTtsFallback: () =>
+              editTtsStatus("⚠️ VietNeu TTS bị lỗi hoặc quá chậm. Đang chuyển sang TTS dự phòng..."),
+            onTtsReady: (source) =>
+              editTtsStatus(
+                source === "vietneu"
+                  ? "✅ Tạo giọng xong, bot đang phát trong Voice."
+                  : "✅ Đã dùng TTS dự phòng, bot đang phát trong Voice.",
+              ),
           });
         }
   }

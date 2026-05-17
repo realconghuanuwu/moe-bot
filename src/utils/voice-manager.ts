@@ -13,6 +13,9 @@ import * as googleTTS from "google-tts-api";
 import { spawn, spawnSync } from "child_process";
 import { createRequire } from "module";
 import fs from "fs";
+import { mkdir, unlink, writeFile } from "fs/promises";
+import os from "os";
+import path from "path";
 
 const require = createRequire(import.meta.url);
 const ffmpegStaticPath = require("ffmpeg-static");
@@ -57,6 +60,70 @@ function resolveFfmpegPath(): string {
 }
 
 const ffmpegPath = resolveFfmpegPath();
+const vietNeuTtsUrl = process.env.VIETNEU_TTS_URL ?? "http://127.0.0.1:8765/tts";
+const vietNeuTtsDir = path.join(os.tmpdir(), "moe-bot-vietneu-tts");
+
+interface AudioChunk {
+  input: string;
+  cleanupPath?: string;
+}
+
+function createGoogleTtsChunks(content: string): AudioChunk[] {
+  return googleTTS
+    .getAllAudioUrls(content, {
+      lang: "vi",
+      slow: false,
+      host: "https://translate.google.com",
+    })
+    .map((chunk) => ({ input: chunk.url }));
+}
+
+async function createVietNeuTtsChunk(content: string): Promise<AudioChunk> {
+  const response = await fetch(vietNeuTtsUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text: content,
+      emotion: "natural",
+      voice_id: null,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`VietNeu TTS returned ${response.status} ${response.statusText}`);
+  }
+
+  const audio = Buffer.from(await response.arrayBuffer());
+  if (audio.length === 0) {
+    throw new Error("VietNeu TTS returned an empty audio response");
+  }
+
+  await mkdir(vietNeuTtsDir, { recursive: true });
+  const filePath = path.join(
+    vietNeuTtsDir,
+    `${Date.now()}-${Math.random().toString(36).slice(2)}.wav`,
+  );
+  await writeFile(filePath, audio);
+
+  return {
+    input: filePath,
+    cleanupPath: filePath,
+  };
+}
+
+async function cleanupAudioChunks(chunks: AudioChunk[]) {
+  await Promise.all(
+    chunks
+      .filter((chunk): chunk is AudioChunk & { cleanupPath: string } => Boolean(chunk.cleanupPath))
+      .map((chunk) =>
+        unlink(chunk.cleanupPath).catch((err) => {
+          console.warn(`[VoiceMgr] Failed to remove temp TTS file ${chunk.cleanupPath}:`, err);
+        }),
+      ),
+  );
+}
 
 export interface QueueItem {
   content: string;
@@ -64,17 +131,22 @@ export interface QueueItem {
   channelId: string;
   guildId: string;
   adapterCreator: any;
+  onTtsProcessing?: () => void | Promise<void>;
+  onTtsReady?: (source: "vietneu" | "google") => void | Promise<void>;
+  onTtsFallback?: () => void | Promise<void>;
 }
 
 class GuildVoiceManager {
   private queue: QueueItem[] = [];
   private player: AudioPlayer;
   private connection: VoiceConnection | null = null;
-  private currentChunks: { url: string }[] = [];
+  private currentChunks: AudioChunk[] = [];
   private currentChunkIndex = 0;
   private currentSpeed = 1;
   private guildId: string;
   private leaveTimeout: NodeJS.Timeout | null = null;
+  private isProcessingQueue = false;
+  private playbackVersion = 0;
 
   constructor(guildId: string) {
     this.guildId = guildId;
@@ -108,7 +180,7 @@ class GuildVoiceManager {
 
     if (this.player.state.status === AudioPlayerStatus.Idle && this.currentChunks.length === 0) {
       if (this.connection?.state.status === VoiceConnectionStatus.Ready) {
-        this.processQueue();
+        void this.processQueue();
       } else {
         console.log(
           `[VoiceMgr:${this.guildId}] Waiting for voice connection to be ready before playback`,
@@ -136,7 +208,7 @@ class GuildVoiceManager {
         this.currentChunks.length === 0 &&
         this.queue.length > 0
       ) {
-        this.processQueue();
+        void this.processQueue();
       }
     });
 
@@ -145,37 +217,71 @@ class GuildVoiceManager {
     });
   }
 
-  private processQueue() {
+  private async processQueue() {
+    if (this.isProcessingQueue) {
+      return;
+    }
+
     if (this.queue.length === 0) {
       console.log(`[VoiceMgr:${this.guildId}] Queue empty, setting leave timeout`);
       this.startLeaveTimeout();
       return;
     }
 
+    this.isProcessingQueue = true;
     const nextItem = this.queue.shift()!;
+    const playbackVersion = this.playbackVersion;
     this.currentSpeed = nextItem.speed;
-    this.currentChunks = googleTTS.getAllAudioUrls(nextItem.content, {
-      lang: "vi",
-      slow: false,
-      host: "https://translate.google.com",
-    });
-    this.currentChunkIndex = 0;
 
-    console.log(`[VoiceMgr:${this.guildId}] Processing new item, chunks: ${this.currentChunks.length}`);
-    this.playNextChunk();
+    try {
+      await nextItem.onTtsProcessing?.();
+
+      try {
+        this.currentChunks = [await createVietNeuTtsChunk(nextItem.content)];
+        console.log(`[VoiceMgr:${this.guildId}] Using VietNeu TTS`);
+        await nextItem.onTtsReady?.("vietneu");
+      } catch (error) {
+        console.warn(
+          `[VoiceMgr:${this.guildId}] VietNeu TTS failed, falling back to Google TTS:`,
+          error,
+        );
+        await nextItem.onTtsFallback?.();
+        this.currentChunks = createGoogleTtsChunks(nextItem.content);
+        await nextItem.onTtsReady?.("google");
+      }
+
+      if (playbackVersion !== this.playbackVersion) {
+        await cleanupAudioChunks(this.currentChunks);
+        this.currentChunks = [];
+        return;
+      }
+
+      this.currentChunkIndex = 0;
+      console.log(`[VoiceMgr:${this.guildId}] Processing new item, chunks: ${this.currentChunks.length}`);
+      this.playNextChunk();
+    } finally {
+      this.isProcessingQueue = false;
+      if (
+        this.currentChunks.length === 0 &&
+        this.queue.length > 0 &&
+        this.player.state.status === AudioPlayerStatus.Idle
+      ) {
+        void this.processQueue();
+      }
+    }
   }
 
   private playNextChunk() {
     if (this.currentChunkIndex >= this.currentChunks.length) {
       this.currentChunks = [];
-      this.processQueue();
+      void this.processQueue();
       return;
     }
 
-    const chunkUrl = this.currentChunks[this.currentChunkIndex].url;
+    const chunk = this.currentChunks[this.currentChunkIndex];
     console.log(`[VoiceMgr:${this.guildId}] Playing chunk ${this.currentChunkIndex + 1}/${this.currentChunks.length} (Speed: ${this.currentSpeed}x)`);
 
-    const ffmpegArgs = ["-hide_banner", "-nostdin", "-i", chunkUrl];
+    const ffmpegArgs = ["-hide_banner", "-nostdin", "-i", chunk.input];
 
     if (this.currentSpeed !== 1) {
       let filter = "";
@@ -208,6 +314,10 @@ class GuildVoiceManager {
     });
 
     ffmpegProcess.on("close", (code, signal) => {
+      if (chunk.cleanupPath) {
+        void cleanupAudioChunks([chunk]);
+      }
+
       if (code !== 0) {
         console.error(
           `[VoiceMgr:${this.guildId}] FFmpeg exited with code=${code} signal=${signal}. stderr=${ffmpegStderr.slice(-2000)}`,
@@ -235,6 +345,7 @@ class GuildVoiceManager {
   }
 
   public stop() {
+    this.playbackVersion++;
     this.queue = [];
     this.currentChunks = [];
     this.player.stop();
@@ -252,6 +363,7 @@ class GuildVoiceManager {
     const hasQueued = this.queue.length > 0;
     const hasCurrent =
       this.currentChunks.length > 0 ||
+      this.isProcessingQueue ||
       this.player.state.status === AudioPlayerStatus.Playing ||
       this.player.state.status === AudioPlayerStatus.Buffering;
 
@@ -259,6 +371,7 @@ class GuildVoiceManager {
       return false;
     }
 
+    this.playbackVersion++;
     this.currentChunks = [];
     this.currentChunkIndex = 0;
 
@@ -270,7 +383,7 @@ class GuildVoiceManager {
       return true;
     }
 
-    this.processQueue();
+    void this.processQueue();
     return true;
   }
 }
