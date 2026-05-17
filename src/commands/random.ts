@@ -139,7 +139,9 @@ export class RandomCommand extends Command {
           });
           const editTtsStatus = async (content: string) => {
             try {
-              await loadingMessage.edit(content);
+              await interaction.webhook.editMessage(loadingMessage.id, {
+                content,
+              });
             } catch (error) {
               console.warn("Failed to edit TTS loading message:", error);
             }
