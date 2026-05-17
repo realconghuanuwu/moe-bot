@@ -65,7 +65,7 @@ export class RandomCommand extends Command {
       return this.handleSkip(interaction);
     }
 
-    const tts = interaction.options.getBoolean("tts") ?? false;
+    const tts = interaction.options.getBoolean("tts") ?? true;
     const speed = interaction.options.getNumber("toc-do") ?? 1;
     await interaction.deferReply();
 
