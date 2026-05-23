@@ -6,7 +6,7 @@ import {
   runYoutubePremiumReminder,
 } from "./youtube-premium-reminder.js";
 
-const YOUTUBE_PREMIUM_REMINDER_CRON = "0 11 10,12,15-25 * *";
+const YOUTUBE_PREMIUM_REMINDER_CRON = "30 11 10,12,15-25 * *";
 
 export function startYoutubePremiumReminderCron(client: Client) {
   const channelId = process.env.YT_REMINDER_CHANNEL_ID;
