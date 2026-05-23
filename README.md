@@ -5,15 +5,24 @@ Moe Bot là một con bot Discord đa năng được phát triển bằng framew
 ## 🚀 Tính năng chính
 
 ### 🎭 Giải trí & Văn mẫu
+
 - **Văn mẫu ngẫu nhiên (`/van-mau random`)** : Lấy các bài văn mẫu "bất hủ" từ API hoặc kho lưu trữ dự phòng.
 - **Voice TTS (Tiếng Việt)**: Tích hợp giọng nói AI trong lệnh `/van-mau` với khả năng tự động vào phòng Voice và đọc nội dung.
 - **Tốc độ đọc linh hoạt**: Tùy chỉnh tốc độ TTS (x1.5, x2, x3) ngay trong lệnh.
 - **Hệ thống hàng đợi (Voice Queue)**: Xử lý nhiều yêu cầu phát âm thanh cùng lúc một cách tuần tự theo từng Server.
 - **Dừng phát (`/van-mau stop`)**: Dừng âm thanh, xóa hàng đợi và rời phòng voice ngay lập tức.
+- **Bỏ qua bài đang phát (`/van-mau skip`)**: Bỏ qua bài đang phát và tự động phát bài tiếp theo trong hàng đợi Voice.
 - **Văn mẫu đe dọa (`/alo [user]`)**: Tag và gửi văn mẫu "đòi nợ/đe dọa" hài hước.
 - **Văn mẫu xin lỗi (`/xin-loi [user]`)**: Gửi lời xin lỗi "chân thành" đến mục tiêu.
 
+### 📺 Quản lý YouTube Premium
+
+- **Kiểm tra trạng thái (`/yt-status`)**: Kiểm tra trạng thái đóng phí YouTube Premium theo từng tháng và cả năm.
+- **Gửi hóa đơn (`/yt-submit`)**: Gửi ảnh chụp màn hình bill thanh toán kèm theo hình thức thanh toán (MB Bank, MoMo) để Admin/chủ host duyệt.
+- **Lịch sử thanh toán (`/yt-history`)**: Xem lại danh sách lịch sử các lần chuyển khoản thanh toán YouTube Premium đã được xác nhận.
+
 ### 📊 Tra cứu thông tin
+
 - **Giá vàng (`/giavang`)** : Cập nhật giá vàng trong nước và thế giới theo thời gian thực.
 - **Giá xăng (`/giaxang`)** : Theo dõi biến động giá xăng dầu mới nhất.
 - **Chat AI (`/chat`)** : Trò chuyện thông minh với OpenAI.

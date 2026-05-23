@@ -7,6 +7,12 @@ import {
   replyYoutubePremiumPaymentGuide,
   YOUTUBE_PREMIUM_PAYMENT_BUTTON_ID,
 } from './services/youtube-premium-payment.js';
+import {
+  handleYoutubePaymentDraftButton,
+  handleYoutubePaymentReviewButton,
+  isPaymentDraftButtonId,
+  isPaymentReviewButtonId,
+} from './services/youtube-premium-payments.js';
 
 const client = new SapphireClient({
   intents: [
@@ -34,17 +40,24 @@ client.once(Events.ClientReady, () => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (
-    !interaction.isButton() ||
-    interaction.customId !== YOUTUBE_PREMIUM_PAYMENT_BUTTON_ID
-  ) {
-    return;
-  }
+  if (!interaction.isButton()) return;
 
   try {
-    await replyYoutubePremiumPaymentGuide(interaction);
+    if (interaction.customId === YOUTUBE_PREMIUM_PAYMENT_BUTTON_ID) {
+      await replyYoutubePremiumPaymentGuide(interaction);
+      return;
+    }
+
+    if (isPaymentReviewButtonId(interaction.customId)) {
+      await handleYoutubePaymentReviewButton(interaction);
+      return;
+    }
+
+    if (isPaymentDraftButtonId(interaction.customId)) {
+      await handleYoutubePaymentDraftButton(interaction);
+    }
   } catch (error) {
-    console.error("[yt-payment] failed", error);
+    console.error("[yt-button] failed", error);
   }
 });
 

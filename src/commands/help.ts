@@ -6,7 +6,8 @@ export class HelpCommand extends Command {
     super(context, {
       ...options,
       name: "help",
-      description: "Hiển thị danh sách tất cả các lệnh và hướng dẫn sử dụng bot",
+      description:
+        "Hiển thị danh sách tất cả các lệnh và hướng dẫn sử dụng bot",
     });
   }
 
@@ -28,7 +29,12 @@ export class HelpCommand extends Command {
         {
           name: "🎭 Giải Trí & Văn Mẫu",
           value:
-            "**/van-mau random** [tts] [toc-do]: Lấy văn mẫu ngẫu nhiên. (Bật `tts` để bot đọc trong phòng Voice).\n**/van-mau stop**: Dừng bot và rời phòng Voice ngay lập tức.\n**/alo** [user]: Gửi văn mẫu đe dọa hài hước đến một người.\n**/xin-loi** [user]: Gửi lời xin lỗi chân thành đến đối phương.",
+            "**/van-mau random** [tts] [toc-do]: Lấy văn mẫu ngẫu nhiên. (Bật `tts` để bot đọc trong phòng Voice).\n**/van-mau stop**: Dừng bot và rời phòng Voice ngay lập tức.\n**/van-mau skip**: Bỏ qua văn mẫu đang phát trong phòng Voice.\n**/alo** [user]: Gửi văn mẫu đe dọa hài hước đến một người.\n**/xin-loi** [user]: Gửi lời xin lỗi chân thành đến đối phương.",
+        },
+        {
+          name: "📺 Quản Lý YouTube Premium",
+          value:
+            "**/yt-status**: Kiểm tra trạng thái thanh toán YouTube Premium.\n**/yt-submit** [proof] [method]: Gửi ảnh bill chuyển khoản thanh toán để chủ host xác nhận.\n**/yt-history**: Xem lịch sử thanh toán YouTube Premium đã được xác nhận của bạn.",
         },
         {
           name: "📊 Tra Cứu Thông Tin",
