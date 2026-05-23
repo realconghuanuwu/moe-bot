@@ -1,14 +1,7 @@
 import { Command } from "@sapphire/framework";
 import dayjs from "dayjs";
-import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ComponentType,
-  EmbedBuilder,
-} from "discord.js";
-import { getGoogleSheet } from "../utils/google-sheet.js";
-import { IMAGE } from "../constants/image.constant.js";
+import { getYoutubePremiumWorksheet } from "../utils/google-sheet.js";
+import { createYoutubePremiumPaymentButtonRow } from "../services/youtube-premium-payment.js";
 
 export class CheckYtPreCommand extends Command {
   constructor(context, options) {
@@ -30,17 +23,7 @@ export class CheckYtPreCommand extends Command {
     await interaction.deferReply();
 
     try {
-      // Get the document instance
-      const doc = await getGoogleSheet();
-
-      // "2112995111" is likely the sheet 'gid' (Worksheet ID).
-      const sheet = doc!.sheetsById["2112995111"];
-
-      if (!sheet) {
-        return interaction.editReply(
-          "❌ Không tìm thấy Sheet với ID 2112995111 trong Document.",
-        );
-      }
+      const sheet = await getYoutubePremiumWorksheet();
 
       // Fetch rows from the worksheet
       const rows = await sheet.getRows();
@@ -97,57 +80,9 @@ export class CheckYtPreCommand extends Command {
         responseMessage += `📌 Các tháng chưa thanh toán:\n> ${unpaidMonths.join(", ")}`;
       }
 
-      // Add Payment Button
-      const row = new ActionRowBuilder().addComponents(
-        new ButtonBuilder()
-          .setCustomId("pay_yt")
-          .setLabel("Hướng dẫn thanh toán")
-          .setStyle(ButtonStyle.Primary)
-          .setEmoji("💰"),
-      );
-
-      const msg = await interaction.editReply({
+      await interaction.editReply({
         content: responseMessage,
-        components: [row],
-      });
-
-      // Create collector for the button
-      const collector = msg.createMessageComponentCollector({
-        componentType: ComponentType.Button,
-        time: 600000, // 10 minutes
-      });
-
-      collector.on("collect", async (i) => {
-        if (i.customId === "pay_yt") {
-          const payInfo =
-            `💰 **Số tiền:** 27.000đ\n\n` +
-            `🏦 **Thông tin chuyển khoản:**\n` +
-            `**MB Bank:** 1010100007214 (LUONG CONG HUAN)\n` +
-            `**MoMo:** 0915364692 (LUONG CONG HUAN)\n\n` +
-            `📊 **Xem bảng theo dõi thanh toán tại:** https://url-shortener.me/BU49\n\n`;
-
-          const mbEmbed = new EmbedBuilder()
-            .setTitle("QR Code MB Bank")
-            .setColor("#004a95")
-            .setImage(IMAGE.MB_BANK_QR);
-
-          const momoEmbed = new EmbedBuilder()
-            .setTitle("QR Code MoMo")
-            .setColor("#a50064")
-            .setImage(IMAGE.MOMO_QR);
-
-          await i.reply({
-            content: payInfo,
-            embeds: [mbEmbed, momoEmbed],
-            ephemeral: false,
-          });
-        }
-      });
-
-      collector.on("end", () => {
-        // Optionally disable the button after timeout
-        (row.components[0] as ButtonBuilder).setDisabled(true);
-        interaction.editReply({ components: [row] }).catch(() => {});
+        components: [createYoutubePremiumPaymentButtonRow()],
       });
     } catch (error) {
       console.error("Error in check-yt-pre command:", error);
