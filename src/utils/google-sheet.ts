@@ -1,5 +1,9 @@
-import { GoogleSpreadsheet } from "google-spreadsheet";
+import {
+  GoogleSpreadsheet,
+  type GoogleSpreadsheetWorksheet,
+} from "google-spreadsheet";
 import { JWT } from "google-auth-library";
+import { DEFAULT_YOUTUBE_PREMIUM_SHEET_TITLE } from "../constants/youtube-premium.constant.js";
 
 let doc: GoogleSpreadsheet | null = null;
 
@@ -32,4 +36,20 @@ export async function getGoogleSheet() {
   await doc.loadInfo(); // Load document properties and worksheets
 
   return doc;
+}
+
+export async function getYoutubePremiumWorksheet(
+  sheetTitle = process.env.YT_SHEET_TITLE ?? DEFAULT_YOUTUBE_PREMIUM_SHEET_TITLE,
+): Promise<GoogleSpreadsheetWorksheet> {
+  const doc = await getGoogleSheet();
+  const sheet = doc.sheetsByTitle[sheetTitle];
+
+  if (!sheet) {
+    const availableSheets = doc.sheetsByIndex.map((worksheet) => worksheet.title);
+    throw new Error(
+      `Không tìm thấy sheet "${sheetTitle}". Các sheet hiện có: ${availableSheets.join(", ")}`,
+    );
+  }
+
+  return sheet;
 }
