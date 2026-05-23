@@ -25,6 +25,16 @@ export interface ReminderNotifier {
   notify(batch: YoutubePremiumReminderBatch): Promise<void>;
 }
 
+export class CompositeReminderNotifier implements ReminderNotifier {
+  public constructor(private readonly notifiers: ReminderNotifier[]) {}
+
+  public async notify(batch: YoutubePremiumReminderBatch): Promise<void> {
+    for (const notifier of this.notifiers) {
+      await notifier.notify(batch);
+    }
+  }
+}
+
 interface SendableTextChannel {
   send(options: MessageCreateOptions): Promise<unknown>;
 }
