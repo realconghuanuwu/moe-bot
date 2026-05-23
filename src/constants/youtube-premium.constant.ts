@@ -1,4 +1,4 @@
-export const YOUTUBE_PREMIUM_PAYMENT_AMOUNT = "28.000đ";
+export const DEFAULT_YOUTUBE_PREMIUM_PAYMENT_AMOUNT = 28000;
 
 export const YOUTUBE_PREMIUM_SHEET_URL = "https://url-shortener.me/BU49";
 
@@ -14,12 +14,31 @@ export const YOUTUBE_PREMIUM_MB_PAYMENT_URL =
 export const YOUTUBE_PREMIUM_MOMO_PAYMENT_URL =
   "https://nhantien.momo.vn/0915364692";
 
-export const YOUTUBE_PREMIUM_PAYMENT_INFO =
-  `💰 **Số tiền:** ${YOUTUBE_PREMIUM_PAYMENT_AMOUNT}\n\n` +
-  `🏦 **Thông tin chuyển khoản:**\n` +
-  `**MB Bank:** 1010100007214 (LUONG CONG HUAN)\n` +
-  `**MoMo:** 0915364692 (LUONG CONG HUAN)\n\n` +
-  `📊 **Xem bảng theo dõi thanh toán tại:** ${YOUTUBE_PREMIUM_SHEET_URL}\n`;
+export function getYoutubePremiumPaymentAmount(): number {
+  const configuredAmount = Number(process.env.YT_PAYMENT_AMOUNT);
+
+  return Number.isFinite(configuredAmount) && configuredAmount > 0
+    ? configuredAmount
+    : DEFAULT_YOUTUBE_PREMIUM_PAYMENT_AMOUNT;
+}
+
+export function formatVndAmount(amount: number): string {
+  return `${new Intl.NumberFormat("vi-VN").format(amount)}đ`;
+}
+
+export function getYoutubePremiumPaymentAmountDisplay(): string {
+  return formatVndAmount(getYoutubePremiumPaymentAmount());
+}
+
+export function getYoutubePremiumPaymentInfo(): string {
+  return (
+    `💰 **Số tiền:** ${getYoutubePremiumPaymentAmountDisplay()}\n\n` +
+    `🏦 **Thông tin chuyển khoản:**\n` +
+    `**MB Bank:** 1010100007214 (LUONG CONG HUAN)\n` +
+    `**MoMo:** 0915364692 (LUONG CONG HUAN)\n\n` +
+    `📊 **Xem bảng theo dõi thanh toán tại:** ${YOUTUBE_PREMIUM_SHEET_URL}\n`
+  );
+}
 
 export const DEFAULT_YOUTUBE_PREMIUM_SHEET_TITLE = "2026 dev";
 

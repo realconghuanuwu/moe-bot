@@ -4,7 +4,7 @@ import {
   YOUTUBE_PREMIUM_MB_QR_IMAGE_URL,
   YOUTUBE_PREMIUM_MOMO_PAYMENT_URL,
   YOUTUBE_PREMIUM_MOMO_QR_IMAGE_URL,
-  YOUTUBE_PREMIUM_PAYMENT_AMOUNT,
+  getYoutubePremiumPaymentAmountDisplay,
   YOUTUBE_PREMIUM_SHEET_URL,
 } from "../constants/youtube-premium.constant.js";
 import {
@@ -42,7 +42,9 @@ export class EmailReminderNotifier implements ReminderNotifier {
     if (batch.candidates.length === 0) return;
 
     if (!this.config.hostBccEmail) {
-      console.warn("[yt-email] YT_HOST_BCC_EMAIL missing; sending without BCC.");
+      console.warn(
+        "[yt-email] YT_HOST_BCC_EMAIL missing; sending without BCC.",
+      );
     }
 
     for (const candidate of batch.candidates) {
@@ -57,7 +59,9 @@ export class EmailReminderNotifier implements ReminderNotifier {
         await this.transporter.sendMail(
           buildYoutubePremiumEmailMessage(candidate, batch, this.config),
         );
-        console.log(`[yt-email] sent to="${candidate.email}" name="${candidate.name}"`);
+        console.log(
+          `[yt-email] sent to="${candidate.email}" name="${candidate.name}"`,
+        );
       } catch (error) {
         console.error(
           `[yt-email] failed to="${candidate.email}" name="${candidate.name}"`,
@@ -68,9 +72,7 @@ export class EmailReminderNotifier implements ReminderNotifier {
   }
 }
 
-export function createEmailReminderNotifierFromEnv():
-  | EmailReminderNotifier
-  | null {
+export function createEmailReminderNotifierFromEnv(): EmailReminderNotifier | null {
   if (process.env.YT_EMAIL_ENABLED !== "true") return null;
 
   const host = process.env.SMTP_HOST;
@@ -116,8 +118,16 @@ export function buildYoutubePremiumEmailMessage(
     batch.today.year(),
   );
   const subject = "Thông báo đến hạn thanh toán phí YouTube Premium";
-  const text = buildYoutubePremiumEmailText(candidate.name, dueDate, unpaidMonths);
-  const html = buildYoutubePremiumEmailHtml(candidate.name, dueDate, unpaidMonths);
+  const text = buildYoutubePremiumEmailText(
+    candidate.name,
+    dueDate,
+    unpaidMonths,
+  );
+  const html = buildYoutubePremiumEmailHtml(
+    candidate.name,
+    dueDate,
+    unpaidMonths,
+  );
 
   return {
     from: config.from,
@@ -140,7 +150,7 @@ export function buildYoutubePremiumEmailText(
     `Kính gửi anh/chị ${name || "bạn"},\n\n` +
     `Đến thời điểm hiện tại, phí sử dụng dịch vụ YouTube Premium cho kỳ nêu trên đã đến hạn thanh toán. ` +
     `Anh/chị vui lòng xem thông tin chi tiết bên dưới và chủ động hoàn tất thanh toán giúp em trong thời gian sớm nhất.\n\n` +
-    `Số tiền: ${YOUTUBE_PREMIUM_PAYMENT_AMOUNT}\n` +
+    `Số tiền: ${getYoutubePremiumPaymentAmountDisplay()}\n` +
     `Hạn chót: trước ${dueDate}\n\n` +
     `Thông tin thanh toán\n\n` +
     `MB Bank\n` +
@@ -154,7 +164,7 @@ export function buildYoutubePremiumEmailText(
     `Theo dõi tiến độ thanh toán\n` +
     `Anh/chị có thể theo dõi trạng thái thanh toán của mình tại bảng tổng hợp dưới đây:\n` +
     `${YOUTUBE_PREMIUM_SHEET_URL}\n\n` +
-    `Sau khi hoàn tất thanh toán, anh/chị vui lòng phản hồi lại để em xác nhận. Xin cảm ơn sự hợp tác của anh/chị.\n`
+    `Sau khi hoàn tất thanh toán, anh/chị vui lòng phản hồi lại hoặc sử dụng lệnh \`/yt-submit\` trên Discord để gửi bill xác nhận. Xin cảm ơn sự hợp tác của anh/chị.\n`
   );
 }
 
@@ -166,7 +176,7 @@ export function buildYoutubePremiumEmailHtml(
   const safeName = escapeHtml(name || "bạn");
   const safeDueDate = escapeHtml(dueDate);
   const safeBillingPeriod = escapeHtml(billingPeriod);
-  const safeAmount = escapeHtml(YOUTUBE_PREMIUM_PAYMENT_AMOUNT);
+  const safeAmount = escapeHtml(getYoutubePremiumPaymentAmountDisplay());
 
   return `
 <!doctype html>
@@ -222,7 +232,7 @@ export function buildYoutubePremiumEmailHtml(
       </div>
 
       <p style="margin:0;font-size:13px;line-height:1.7;color:#374151;">
-        Sau khi hoàn tất thanh toán, anh/chị vui lòng phản hồi lại để em xác nhận. Xin cảm ơn sự hợp tác của anh/chị.
+        Sau khi hoàn tất thanh toán, anh/chị vui lòng phản hồi lại hoặc sử dụng lệnh <code>/yt-submit</code> trên Discord để gửi bill xác nhận. Xin cảm ơn sự hợp tác của anh/chị.
       </p>
     </div>
   </body>

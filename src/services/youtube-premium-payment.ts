@@ -6,7 +6,7 @@ import {
   type ButtonInteraction,
 } from "discord.js";
 import { IMAGE } from "../constants/image.constant.js";
-import { YOUTUBE_PREMIUM_PAYMENT_INFO } from "../constants/youtube-premium.constant.js";
+import { getYoutubePremiumPaymentInfo } from "../constants/youtube-premium.constant.js";
 
 export const YOUTUBE_PREMIUM_PAYMENT_BUTTON_ID = "pay_yt";
 
@@ -34,7 +34,7 @@ export async function replyYoutubePremiumPaymentGuide(
     .setImage(IMAGE.MOMO_QR);
 
   await interaction.reply({
-    content: `${YOUTUBE_PREMIUM_PAYMENT_INFO}\n`,
+    content: `${getYoutubePremiumPaymentInfo()}\n`,
     embeds: [mbEmbed, momoEmbed],
     ephemeral: false,
   });

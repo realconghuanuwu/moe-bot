@@ -7,8 +7,8 @@ export class CheckYtPreCommand extends Command {
   constructor(context, options) {
     super(context, {
       ...options,
-      name: "check-yt-pre",
-      description: "Kiểm tra trạng thái thanh toán YouTube Premium",
+      name: "yt-status",
+      description: "Kiểm tra số tháng chưa thanh toán",
     });
   }
 
