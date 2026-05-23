@@ -1,12 +1,16 @@
 import cron from "node-cron";
 import type { Client } from "discord.js";
 import { DEFAULT_YOUTUBE_PREMIUM_REMINDER_TIMEZONE } from "../constants/youtube-premium.constant.js";
+import { createEmailReminderNotifierFromEnv } from "./youtube-premium-email.js";
 import {
+  CompositeReminderNotifier,
   DiscordChannelReminderNotifier,
+  type ReminderNotifier,
   runYoutubePremiumReminder,
 } from "./youtube-premium-reminder.js";
 
-const YOUTUBE_PREMIUM_REMINDER_CRON = "30 11 10,12,15-25 * *";
+// const YOUTUBE_PREMIUM_REMINDER_CRON = "0 11 10,12,15-25 * *";
+const YOUTUBE_PREMIUM_REMINDER_CRON = "55 11 10,12,15-25 * *";
 
 export function startYoutubePremiumReminderCron(client: Client) {
   const channelId = process.env.YT_REMINDER_CHANNEL_ID;
@@ -21,7 +25,16 @@ export function startYoutubePremiumReminderCron(client: Client) {
   const timezone =
     process.env.YT_REMINDER_TIMEZONE ??
     DEFAULT_YOUTUBE_PREMIUM_REMINDER_TIMEZONE;
-  const notifier = new DiscordChannelReminderNotifier(client, channelId);
+  const notifiers: ReminderNotifier[] = [
+    new DiscordChannelReminderNotifier(client, channelId),
+  ];
+  const emailNotifier = createEmailReminderNotifierFromEnv();
+
+  if (emailNotifier) {
+    notifiers.push(emailNotifier);
+  }
+
+  const notifier = new CompositeReminderNotifier(notifiers);
 
   const task = cron.schedule(
     YOUTUBE_PREMIUM_REMINDER_CRON,
