@@ -7,7 +7,9 @@ import {
   formatVndAmount,
   getYoutubePremiumPaymentAmount,
   getYoutubePremiumPaymentAmountDisplay,
+  YOUTUBE_PREMIUM_SHEET_URL,
 } from "../constants/youtube-premium.constant.js";
+import { sendYoutubePremiumPaymentConfirmedEmailFromEnv } from "./youtube-premium-email.js";
 import {
   getGoogleSheet,
   getYoutubePremiumWorksheet,
@@ -15,6 +17,8 @@ import {
 
 export const PAYMENT_SUBMISSIONS_SHEET_TITLE = "Payment Submissions";
 export const PAYMENT_HISTORY_SHEET_TITLE = "Payment History";
+export const PAYMENT_SUBMISSIONS_DEV_SHEET_TITLE = "Payment Submissions dev";
+export const PAYMENT_HISTORY_DEV_SHEET_TITLE = "Payment History dev";
 export const PAYMENT_CONFIRM_BUTTON_PREFIX = "yt_payment_confirm:";
 export const PAYMENT_REJECT_BUTTON_PREFIX = "yt_payment_reject:";
 export const PAYMENT_DRAFT_MONTH_BUTTON_PREFIX = "yt_payment_month:";
@@ -54,6 +58,8 @@ export const PAYMENT_HISTORY_HEADERS = [
   "confirmed_by",
   "note",
 ];
+
+export type PaymentLedgerEnvironment = "prod" | "dev";
 
 export interface PaymentProofAttachment {
   url: string;
@@ -150,6 +156,35 @@ export function releasePaymentDraftSubmitLock(draftId: string): void {
 
 export function clearPaymentDraftSubmitLocksForTest(): void {
   paymentDraftSubmitLocks.clear();
+}
+
+export function getPaymentLedgerEnvironment(
+  value = process.env.YT_PAYMENT_ENV,
+): PaymentLedgerEnvironment {
+  if (!value) return "prod";
+
+  const normalizedValue = value.trim().toLowerCase();
+  if (normalizedValue === "prod" || normalizedValue === "dev") {
+    return normalizedValue;
+  }
+
+  throw new Error('YT_PAYMENT_ENV phải là "prod" hoặc "dev".');
+}
+
+export function getPaymentSubmissionsSheetTitle(
+  env = getPaymentLedgerEnvironment(),
+): string {
+  return env === "dev"
+    ? PAYMENT_SUBMISSIONS_DEV_SHEET_TITLE
+    : PAYMENT_SUBMISSIONS_SHEET_TITLE;
+}
+
+export function getPaymentHistorySheetTitle(
+  env = getPaymentLedgerEnvironment(),
+): string {
+  return env === "dev"
+    ? PAYMENT_HISTORY_DEV_SHEET_TITLE
+    : PAYMENT_HISTORY_SHEET_TITLE;
 }
 
 export function validatePaymentPeriod(period: string): boolean {
@@ -507,6 +542,9 @@ export async function submitYoutubePremiumPayment(
   };
 
   const submissionsSheet = await getOrCreatePaymentSubmissionsSheet();
+  console.log(
+    `[yt-payment] submit env=${getPaymentLedgerEnvironment()} sheet="${submissionsSheet.title}"`,
+  );
   await submissionsSheet.addRow(toRawRow(submission));
 
   return submission;
@@ -589,6 +627,18 @@ export async function handleYoutubePaymentReviewButton(
       ).catch((error) =>
         console.error("[yt-payment] failed to notify submitter", error),
       );
+
+      if (isConfirm) {
+        await sendYoutubePremiumPaymentConfirmedEmailFromEnv({
+          memberName: result.submission.member_name,
+          email: result.submission.email,
+          periods: result.submission.periods,
+          amount: result.submission.amount,
+          method: result.submission.method,
+          proofUrl: result.submission.proof_url,
+          confirmedAt: result.submission.reviewed_at,
+        });
+      }
     }
   } catch (error) {
     console.error("[yt-payment] failed to review payment submission", error);
@@ -610,6 +660,9 @@ export async function confirmPaymentSubmission(
   didProcess: boolean;
 }> {
   const { row, submission } = await findPaymentSubmissionRowById(submissionId);
+  console.log(
+    `[yt-payment] confirm env=${getPaymentLedgerEnvironment()} submissionId="${submissionId}"`,
+  );
 
   if (submission.status !== "pending") {
     return {
@@ -683,6 +736,9 @@ export async function rejectPaymentSubmission(
   didProcess: boolean;
 }> {
   const { row, submission } = await findPaymentSubmissionRowById(submissionId);
+  console.log(
+    `[yt-payment] reject env=${getPaymentLedgerEnvironment()} submissionId="${submissionId}"`,
+  );
 
   if (submission.status !== "pending") {
     return {
@@ -731,6 +787,9 @@ export async function getConfirmedPaymentHistoryByDiscordUid(
   discordUid: string,
 ): Promise<PaymentHistoryRecord[]> {
   const historySheet = await getOrCreatePaymentHistorySheet();
+  console.log(
+    `[yt-payment] history env=${getPaymentLedgerEnvironment()} sheet="${historySheet.title}" discordUid="${discordUid}"`,
+  );
   const rows = await historySheet.getRows();
 
   return rows
@@ -796,15 +855,19 @@ async function findPaymentSubmissionRowById(submissionId: string): Promise<{
 }
 
 async function getOrCreatePaymentSubmissionsSheet() {
+  const sheetTitle = getPaymentSubmissionsSheetTitle();
+
   return getOrCreateWorksheet(
-    PAYMENT_SUBMISSIONS_SHEET_TITLE,
+    sheetTitle,
     PAYMENT_SUBMISSION_HEADERS,
   );
 }
 
 async function getOrCreatePaymentHistorySheet() {
+  const sheetTitle = getPaymentHistorySheetTitle();
+
   return getOrCreateWorksheet(
-    PAYMENT_HISTORY_SHEET_TITLE,
+    sheetTitle,
     PAYMENT_HISTORY_HEADERS,
   );
 }
@@ -929,9 +992,22 @@ async function notifyPaymentSubmitter(
   isConfirmed: boolean,
 ): Promise<void> {
   const user = await client.users.fetch(submission.discord_uid);
+  const reviewedAt = submission.reviewed_at
+    ? new Date(submission.reviewed_at).toLocaleString("vi-VN", {
+        timeZone: "Asia/Ho_Chi_Minh",
+      })
+    : "Không rõ";
+
   await user.send(
     isConfirmed
-      ? `✅ Thanh toán YouTube Premium kỳ ${submission.periods} của bạn đã được xác nhận.`
+      ? `✅ **Thanh toán YouTube Premium đã được xác nhận**\n\n` +
+          `📅 Kỳ: **${submission.periods}**\n` +
+          `💰 Số tiền: **${submission.amount}**\n` +
+          `🏦 Phương thức: **${submission.method}**\n` +
+          `🕒 Xác nhận: **${reviewedAt}**\n` +
+          `🧾 Bill: ${submission.proof_url}\n\n` +
+          `Bạn có thể dùng lệnh \`/yt-history\` để xem lại lịch sử thanh toán.\n` +
+          `Bảng theo dõi: ${YOUTUBE_PREMIUM_SHEET_URL}`
       : `❌ Thanh toán YouTube Premium kỳ ${submission.periods} của bạn đã bị từ chối. Vui lòng kiểm tra lại bill hoặc liên hệ chủ host.`,
   );
 }
