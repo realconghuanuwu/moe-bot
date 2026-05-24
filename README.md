@@ -54,7 +54,46 @@ Tạo file `.env` và điền đầy đủ các thông tin:
 DISCORD_TOKEN=Token của Bot Discord
 OPENAI_API_KEY=API Key của OpenAI
 OPENAI_BASE_URL=Base URL của OpenAI (Tùy chọn)
+
+# Google Sheet YouTube Premium
+GOOGLE_SERVICE_ACCOUNT_EMAIL=Email service account Google
+GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+SPREADSHEET_ID_YT=ID file Google Sheet
+YT_SHEET_TITLE=2026 dev
+
+# Payment ledger environment
+# dev  -> ghi vào tab: Payment Submissions dev, Payment History dev
+# prod -> ghi vào tab: Payment Submissions, Payment History
+# Nếu bỏ trống, bot mặc định dùng prod để tránh đổi tab prod ngoài ý muốn.
+YT_PAYMENT_ENV=dev
+
+# YouTube Premium reminder
+YT_REMINDER_CHANNEL_ID=ID channel nhắc nợ
+YT_REMINDER_TIMEZONE=Asia/Ho_Chi_Minh
+YT_PAYMENT_AMOUNT=28000
+YT_HOST_DISCORD_UIDS=Discord UID chủ host, cách nhau bằng dấu phẩy
+
+# Email SMTP
+YT_EMAIL_ENABLED=false
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_SECURE=false
+SMTP_USER=Email SMTP
+SMTP_PASS=Mật khẩu SMTP/App Password
+SMTP_FROM="Moe Bot <Email SMTP>"
+YT_HOST_BCC_EMAIL=Email chủ host nhận BCC khi nhắc nợ
 ```
+
+### Lưu ý dev/prod cho lịch sử thanh toán
+
+`YT_PAYMENT_ENV` chỉ quyết định nơi lưu dữ liệu của 2 bảng payment ledger:
+
+- `YT_PAYMENT_ENV=prod`: dùng `Payment Submissions` và `Payment History`.
+- `YT_PAYMENT_ENV=dev`: dùng `Payment Submissions dev` và `Payment History dev`.
+
+Không dùng `YT_SHEET_TITLE` để suy luận môi trường payment ledger. `YT_SHEET_TITLE` chỉ chọn tab danh sách thành viên YouTube Premium, ví dụ `2026 dev` hoặc `2026`.
+
+Để bảo toàn dữ liệu prod, 2 tab `Payment Submissions` và `Payment History` hiện tại được giữ nguyên. Khi dev cần test submit/confirm bill, hãy set `YT_PAYMENT_ENV=dev` để bot tự tạo và ghi vào 2 tab dev riêng.
 
 ### 3. Cài đặt thư viện
 
